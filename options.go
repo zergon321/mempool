@@ -2,15 +2,15 @@ package mempool
 
 import "sync"
 
-type PoolOption[T Erasable] func(pool *Pool[T], params *poolParams) error
+type PoolOption func(pool *Pool, params *poolParams) error
 
 type poolParams struct {
 	initCap int
 	initLen int
 }
 
-func PoolOptionInitialCapacity[T Erasable](capacity int) PoolOption[T] {
-	return func(pool *Pool[T], params *poolParams) error {
+func PoolOptionInitialCapacity(capacity int) PoolOption {
+	return func(pool *Pool, params *poolParams) error {
 		if capacity < 0 {
 			return &ErrorNegativeCapacity{
 				capacity: capacity,
@@ -22,8 +22,8 @@ func PoolOptionInitialCapacity[T Erasable](capacity int) PoolOption[T] {
 	}
 }
 
-func PoolOptionInitialLength[T Erasable](length int) PoolOption[T] {
-	return func(pool *Pool[T], params *poolParams) error {
+func PoolOptionInitialLength(length int) PoolOption {
+	return func(pool *Pool, params *poolParams) error {
 		if length < 0 {
 			return &ErrorNegativeLength{
 				length: length,
@@ -35,8 +35,8 @@ func PoolOptionInitialLength[T Erasable](length int) PoolOption[T] {
 	}
 }
 
-func PoolOptionConcurrent[T Erasable]() PoolOption[T] {
-	return func(pool *Pool[T], params *poolParams) error {
+func PoolOptionConcurrent() PoolOption {
+	return func(pool *Pool, params *poolParams) error {
 		pool.mut = &sync.Mutex{}
 		return nil
 	}

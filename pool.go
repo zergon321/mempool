@@ -2,15 +2,15 @@ package mempool
 
 import "sync"
 
-type Pool[T Erasable] struct {
-	objects []*T
-	mut     *sync.Mutex
+type Pool struct {
+	objects     []Erasable
+	mut         *sync.Mutex
+	constructor func() Erasable
 }
 
-func (pool *Pool[T]) Get() *T {
+func (pool *Pool) Get() Erasable {
 	if len(pool.objects) <= 0 {
-		var zeroVal T
-		return &zeroVal
+		return pool.constructor()
 	}
 
 	if pool.mut != nil {
@@ -24,13 +24,13 @@ func (pool *Pool[T]) Get() *T {
 	return object
 }
 
-func (pool *Pool[T]) Put(object *T) error {
+func (pool *Pool) Put(object Erasable) error {
 	if pool.mut != nil {
 		pool.mut.Lock()
 		defer pool.mut.Unlock()
 	}
 
-	err := (*object).Erase()
+	err := object.Erase()
 
 	if err != nil {
 		return err
@@ -41,8 +41,8 @@ func (pool *Pool[T]) Put(object *T) error {
 	return nil
 }
 
-func NewPool[T Erasable](options ...PoolOption[T]) (*Pool[T], error) {
-	var pool Pool[T]
+func NewPool[T Erasable](options ...PoolOption) (*Pool, error) {
+	var pool Pool
 	var params poolParams
 
 	// Apply all the options.
@@ -56,11 +56,10 @@ func NewPool[T Erasable](options ...PoolOption[T]) (*Pool[T], error) {
 	}
 
 	// Fill the pool.
-	pool.objects = make([]*T, 0, params.initCap)
+	pool.objects = make([]Erasable, 0, params.initCap)
 
 	for i := 0; i < params.initLen; i++ {
-		var zeroVal T
-		pool.objects = append(pool.objects, &zeroVal)
+		pool.objects = append(pool.objects, pool.constructor())
 	}
 
 	return &pool, nil
