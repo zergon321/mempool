@@ -41,7 +41,7 @@ func (pool *Pool) Put(object Erasable) error {
 	return nil
 }
 
-func NewPool[T Erasable](options ...PoolOption) (*Pool, error) {
+func NewPool[T Erasable](constructor func() Erasable, options ...PoolOption) (*Pool, error) {
 	var pool Pool
 	var params poolParams
 
@@ -56,6 +56,7 @@ func NewPool[T Erasable](options ...PoolOption) (*Pool, error) {
 	}
 
 	// Fill the pool.
+	pool.constructor = constructor
 	pool.objects = make([]Erasable, 0, params.initCap)
 
 	for i := 0; i < params.initLen; i++ {
