@@ -14,7 +14,7 @@ type Pool[T Erasable] struct {
 
 // Get extracts an empty object
 // from the pool.
-func (pool *Pool[T]) Get() Erasable {
+func (pool *Pool[T]) Get() T {
 	if len(pool.objects) <= 0 {
 		return pool.constructor()
 	}
