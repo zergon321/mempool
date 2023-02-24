@@ -2,13 +2,19 @@ package mempool
 
 import "sync"
 
-type Pool struct {
-	objects     []Erasable
+// Pool holds dynamically
+// allocated objects that
+// can be reused throughout
+// the runtime.
+type Pool[T Erasable] struct {
+	objects     []T
 	mut         *sync.Mutex
-	constructor func() Erasable
+	constructor func() T
 }
 
-func (pool *Pool) Get() Erasable {
+// Get extracts an empty object
+// from the pool.
+func (pool *Pool[T]) Get() Erasable {
 	if len(pool.objects) <= 0 {
 		return pool.constructor()
 	}
@@ -24,7 +30,10 @@ func (pool *Pool) Get() Erasable {
 	return object
 }
 
-func (pool *Pool) Put(object Erasable) error {
+// Put puts the object to the pool
+// and erases its fields so it can
+// be reused.
+func (pool *Pool[T]) Put(object T) error {
 	if pool.mut != nil {
 		pool.mut.Lock()
 		defer pool.mut.Unlock()
@@ -41,8 +50,10 @@ func (pool *Pool) Put(object Erasable) error {
 	return nil
 }
 
-func NewPool[T Erasable](constructor func() Erasable, options ...PoolOption) (*Pool, error) {
-	var pool Pool
+// NewPool returns a new pool
+// for a certain object type.
+func NewPool[T Erasable](constructor func() T, options ...PoolOption[T]) (*Pool[T], error) {
+	var pool Pool[T]
 	var params poolParams
 
 	// Apply all the options.
@@ -57,7 +68,7 @@ func NewPool[T Erasable](constructor func() Erasable, options ...PoolOption) (*P
 
 	// Fill the pool.
 	pool.constructor = constructor
-	pool.objects = make([]Erasable, 0, params.initCap)
+	pool.objects = make([]T, 0, params.initCap)
 
 	for i := 0; i < params.initLen; i++ {
 		pool.objects = append(pool.objects, pool.constructor())
