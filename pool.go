@@ -1,13 +1,17 @@
 package mempool
 
-import "sync"
+import (
+	"sync"
+
+	ll "github.com/zergon321/ll"
+)
 
 // Pool holds dynamically
 // allocated objects that
 // can be reused throughout
 // the runtime.
 type Pool[T Erasable] struct {
-	objects     []T
+	objects     *ll.List[T]
 	mut         *sync.Mutex
 	constructor func() T
 }
@@ -15,7 +19,7 @@ type Pool[T Erasable] struct {
 // Get extracts an empty object
 // from the pool.
 func (pool *Pool[T]) Get() T {
-	if len(pool.objects) <= 0 {
+	if pool.objects.Len() <= 0 {
 		return pool.constructor()
 	}
 
@@ -24,8 +28,7 @@ func (pool *Pool[T]) Get() T {
 		defer pool.mut.Unlock()
 	}
 
-	object := pool.objects[len(pool.objects)-1]
-	pool.objects = pool.objects[:len(pool.objects)-1]
+	object := pool.objects.Remove(pool.objects.Back())
 
 	return object
 }
@@ -45,7 +48,7 @@ func (pool *Pool[T]) Put(object T) error {
 		return err
 	}
 
-	pool.objects = append(pool.objects, object)
+	pool.objects.PushBack(object)
 
 	return nil
 }
@@ -68,10 +71,10 @@ func NewPool[T Erasable](constructor func() T, options ...PoolOption[T]) (*Pool[
 
 	// Fill the pool.
 	pool.constructor = constructor
-	pool.objects = make([]T, 0, params.initCap)
+	pool.objects = ll.New[T]()
 
 	for i := 0; i < params.initLen; i++ {
-		pool.objects = append(pool.objects, pool.constructor())
+		pool.objects.PushBack(pool.constructor())
 	}
 
 	return &pool, nil
