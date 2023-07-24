@@ -1,5 +1,5 @@
 module github.com/zergon321/mempool
 
-go 1.19
+go 1.20
 
-require github.com/zergon321/ll v0.0.0-20230619100147-668a6cf6d9c0
+require github.com/zergon321/ll v0.0.0-20230724222516-80dcef1cc080

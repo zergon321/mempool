@@ -11,7 +11,7 @@ import (
 // can be reused throughout
 // the runtime.
 type Pool[T Erasable] struct {
-	objects     *ll.List[T]
+	objects     *ll.AmortizedList[T]
 	mut         *sync.Mutex
 	constructor func() T
 }
@@ -71,7 +71,7 @@ func NewPool[T Erasable](constructor func() T, options ...PoolOption[T]) (*Pool[
 
 	// Fill the pool.
 	pool.constructor = constructor
-	pool.objects = ll.New[T]()
+	pool.objects = ll.NewAmortized[T]()
 
 	for i := 0; i < params.initLen; i++ {
 		pool.objects.PushBack(pool.constructor())
