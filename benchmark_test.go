@@ -75,13 +75,15 @@ func BenchmarkMempoolRefill(b *testing.B) {
 		pool.Put(make([]byte, 64))
 	}
 
+	data := make([]ByteArray, 0, b.N)
+
 	for i := 0; i < b.N; i++ {
-		pool.Get()
+		data = append(data, pool.Get())
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(data[i])
 	}
 }
