@@ -7,23 +7,25 @@ import (
 	"github.com/zergon321/mempool"
 )
 
-type ByteArray []byte
+type Data struct {
+	X float32
+	Y float32
+}
 
-func (array ByteArray) Erase() error {
-	for i := 0; i < len(array); i++ {
-		array[i] = 0
-	}
+func (data *Data) Erase() error {
+	data.X = 0
+	data.Y = 0
 
 	return nil
 }
 
 func BenchmarkSyncPool(b *testing.B) {
 	pool := &sync.Pool{
-		New: func() any { return make([]byte, 64) },
+		New: func() any { return &Data{X: 32, Y: 16} },
 	}
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
 	b.ResetTimer()
@@ -35,27 +37,27 @@ func BenchmarkSyncPool(b *testing.B) {
 
 func BenchmarkSyncPoolFill(b *testing.B) {
 	pool := &sync.Pool{
-		New: func() any { return make([]byte, 64) },
+		New: func() any { return &Data{X: 32, Y: 16} },
 	}
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 }
 
 func BenchmarkSyncPoolRefill(b *testing.B) {
 	pool := &sync.Pool{
-		New: func() any { return make([]byte, 64) },
+		New: func() any { return &Data{X: 32, Y: 16} },
 	}
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
-	data := make([]ByteArray, 0, b.N)
+	data := make([]*Data, 0, b.N)
 
 	for i := 0; i < b.N; i++ {
-		data = append(data, pool.Get().([]byte))
+		data = append(data, pool.Get().(*Data))
 	}
 
 	b.ResetTimer()
@@ -66,11 +68,11 @@ func BenchmarkSyncPoolRefill(b *testing.B) {
 }
 
 func BenchmarkMempool(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) })
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} })
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
 	b.ResetTimer()
@@ -81,23 +83,23 @@ func BenchmarkMempool(b *testing.B) {
 }
 
 func BenchmarkMempoolFill(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) })
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} })
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 }
 
 func BenchmarkMempoolRefill(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) })
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} })
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
-	data := make([]ByteArray, 0, b.N)
+	data := make([]*Data, 0, b.N)
 
 	for i := 0; i < b.N; i++ {
 		data = append(data, pool.Get())
@@ -111,12 +113,12 @@ func BenchmarkMempoolRefill(b *testing.B) {
 }
 
 func BenchmarkMempoolConcurrent(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) },
-		mempool.PoolOptionConcurrent[ByteArray]())
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} },
+		mempool.PoolOptionConcurrent[*Data]())
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
 	b.ResetTimer()
@@ -127,25 +129,25 @@ func BenchmarkMempoolConcurrent(b *testing.B) {
 }
 
 func BenchmarkMempoolFillConcurrent(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) },
-		mempool.PoolOptionConcurrent[ByteArray]())
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} },
+		mempool.PoolOptionConcurrent[*Data]())
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 }
 
 func BenchmarkMempoolRefillConcurrent(b *testing.B) {
-	pool, _ := mempool.NewPool[ByteArray](
-		func() ByteArray { return make([]byte, 64) },
-		mempool.PoolOptionConcurrent[ByteArray]())
+	pool, _ := mempool.NewPool[*Data](
+		func() *Data { return &Data{X: 32, Y: 16} },
+		mempool.PoolOptionConcurrent[*Data]())
 
 	for i := 0; i < b.N; i++ {
-		pool.Put(make([]byte, 64))
+		pool.Put(&Data{X: 32, Y: 16})
 	}
 
-	data := make([]ByteArray, 0, b.N)
+	data := make([]*Data, 0, b.N)
 
 	for i := 0; i < b.N; i++ {
 		data = append(data, pool.Get())
