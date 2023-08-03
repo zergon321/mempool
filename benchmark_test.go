@@ -43,6 +43,28 @@ func BenchmarkSyncPoolFill(b *testing.B) {
 	}
 }
 
+func BenchmarkSyncPoolRefill(b *testing.B) {
+	pool := &sync.Pool{
+		New: func() any { return make([]byte, 64) },
+	}
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(make([]byte, 64))
+	}
+
+	data := make([]ByteArray, 0, b.N)
+
+	for i := 0; i < b.N; i++ {
+		data = append(data, pool.Get().([]byte))
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(data[i])
+	}
+}
+
 func BenchmarkMempool(b *testing.B) {
 	pool, _ := mempool.NewPool[ByteArray](
 		func() ByteArray { return make([]byte, 64) })
@@ -70,6 +92,54 @@ func BenchmarkMempoolFill(b *testing.B) {
 func BenchmarkMempoolRefill(b *testing.B) {
 	pool, _ := mempool.NewPool[ByteArray](
 		func() ByteArray { return make([]byte, 64) })
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(make([]byte, 64))
+	}
+
+	data := make([]ByteArray, 0, b.N)
+
+	for i := 0; i < b.N; i++ {
+		data = append(data, pool.Get())
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(data[i])
+	}
+}
+
+func BenchmarkMempoolConcurrent(b *testing.B) {
+	pool, _ := mempool.NewPool[ByteArray](
+		func() ByteArray { return make([]byte, 64) },
+		mempool.PoolOptionConcurrent[ByteArray]())
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(make([]byte, 64))
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		pool.Get()
+	}
+}
+
+func BenchmarkMempoolFillConcurrent(b *testing.B) {
+	pool, _ := mempool.NewPool[ByteArray](
+		func() ByteArray { return make([]byte, 64) },
+		mempool.PoolOptionConcurrent[ByteArray]())
+
+	for i := 0; i < b.N; i++ {
+		pool.Put(make([]byte, 64))
+	}
+}
+
+func BenchmarkMempoolRefillConcurrent(b *testing.B) {
+	pool, _ := mempool.NewPool[ByteArray](
+		func() ByteArray { return make([]byte, 64) },
+		mempool.PoolOptionConcurrent[ByteArray]())
 
 	for i := 0; i < b.N; i++ {
 		pool.Put(make([]byte, 64))
